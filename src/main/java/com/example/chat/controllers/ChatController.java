@@ -4,6 +4,7 @@ import com.example.chat.models.documents.Mensaje;
 import com.example.chat.models.service.ChatService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.Date;
@@ -15,9 +16,11 @@ public class ChatController {
     private String[] colores = {"red", "green", "blue", "magenta", "purple", "orange"};
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate webSocket;
 
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, SimpMessagingTemplate webSocket) {
         this.chatService = chatService;
+        this.webSocket = webSocket;
     }
 
     @MessageMapping("/mensaje")
@@ -40,5 +43,10 @@ public class ChatController {
     @SendTo("/chat/escribiendo")
     public String estaEscribiendo(String username) {
         return username.concat(" está escribiendo ...");
+    }
+
+    @MessageMapping("/historial")
+    public void historial(String clienteId){
+        webSocket.convertAndSend("/chat/historial/" + clienteId, chatService.obtenerUltimos10Mensajes());
     }
 }
